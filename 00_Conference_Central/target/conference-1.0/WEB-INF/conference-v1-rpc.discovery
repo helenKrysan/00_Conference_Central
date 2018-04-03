@@ -1,6 +1,6 @@
 {
  "kind": "discovery#rpcDescription",
- "etag": "\"OQKfQPkpHu0nIKZBNBdt47Yvjvo/E40EdNKiQ1ERldJIOKPkDMljkFA\"",
+ "etag": "\"OQKfQPkpHu0nIKZBNBdt47Yvjvo/2MnZeDksdNE9PmwIIX4HWB6XBk8\"",
  "discoveryVersion": "v1",
  "id": "conference:v1",
  "name": "conference",
@@ -69,6 +69,15 @@
   }
  },
  "schemas": {
+  "Announcement": {
+   "id": "Announcement",
+   "type": "object",
+   "properties": {
+    "message": {
+     "type": "string"
+    }
+   }
+  },
   "Conference": {
    "id": "Conference",
    "type": "object",
@@ -251,6 +260,16 @@
    ],
    "returns": {
     "$ref": "Conference"
+   },
+   "scopes": [
+    "https://www.googleapis.com/auth/userinfo.email"
+   ]
+  },
+  "conference.getAnnouncement": {
+   "id": "conference.getAnnouncement",
+   "allowGet": true,
+   "returns": {
+    "$ref": "Announcement"
    },
    "scopes": [
     "https://www.googleapis.com/auth/userinfo.email"

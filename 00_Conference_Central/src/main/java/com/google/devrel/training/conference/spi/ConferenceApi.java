@@ -10,11 +10,14 @@ import com.google.api.server.spi.response.ConflictException;
 import com.google.api.server.spi.response.ForbiddenException;
 import com.google.api.server.spi.response.NotFoundException;
 import com.google.api.server.spi.response.UnauthorizedException;
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.appengine.api.users.User;
 import com.google.devrel.training.conference.Constants;
+import com.google.devrel.training.conference.domain.Announcement;
 import com.google.devrel.training.conference.domain.Conference;
 import com.google.devrel.training.conference.domain.Profile;
 import com.google.devrel.training.conference.form.ConferenceForm;
@@ -65,7 +68,7 @@ public class ConferenceApi {
 
     // TODO 1 Pass the ProfileForm parameter
     // TODO 2 Pass the User parameter
-    public Profile saveProfile( User user, ProfileForm form) throws UnauthorizedException {
+    public Profile saveProfile(final User user, ProfileForm form) throws UnauthorizedException {
 
         String userId = null;
         String mainEmail = null; 
@@ -91,18 +94,26 @@ public class ConferenceApi {
         // Get the userId and mainEmail
         userId = user.getUserId();
         mainEmail = user.getEmail();
+        
+        Profile profile = getProfile(user);
         // TODO 2
         // If the displayName is null, set it to default value based on the user's email
         // by calling extractDefaultDisplayNameFromEmail(...)
-        if(displayName.isEmpty()) {
-        	displayName = extractDefaultDisplayNameFromEmail(user.getEmail());
-        }
-        Profile profile = getProfile(user);
-        if (profile == null)
-        profile = new Profile(userId, displayName, mainEmail, teeShirtSize);
-        else
-        profile.update(displayName,teeShirtSize);
+        if (profile == null) {
+            if (displayName == null) {
+                displayName = extractDefaultDisplayNameFromEmail(user.getEmail());
+            }
 
+            if (teeShirtSize == null) {
+
+                teeShirtSize = TeeShirtSize.NOT_SPECIFIED;
+
+            }
+            profile = new Profile(userId, displayName, mainEmail, teeShirtSize);
+
+        } else {
+            profile.update(displayName, teeShirtSize);
+        }
         // TODO 3 (In Lesson 3)
         // Save the Profile entity in the datastore
         ofy().save().entity(profile).now();
@@ -564,6 +575,43 @@ public class ConferenceApi {
         }
 
         return ofy().load().keys(keysToAttend).values();
+
+    }
+    @ApiMethod(
+
+    	    name="getAnnouncement",
+
+    	    path = "announcement",
+
+    	    httpMethod = HttpMethod.GET
+
+    	    )
+
+    public Announcement getAnnouncement() {
+
+    	    //TODO GET announcement from memcache by key and if it exist return it
+
+    	MemcacheService memcacheService = MemcacheServiceFactory.getMemcacheService();
+
+    	Announcement myvalue =  (Announcement) memcacheService.get(Constants.MEMCACHE_ANNOUNCEMENTS_KEY);
+
+    	if (myvalue == null) {
+
+            try {
+
+				throw new NotFoundException("Announcement doesn't exist.");
+
+			} catch (NotFoundException e) {
+
+				e.printStackTrace();
+
+			}
+
+        }
+
+    	
+
+    	return myvalue;
 
     }
 }
